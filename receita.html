@@ -175,10 +175,14 @@
             width: 100%;
             background: #f9f9f9;
             border-radius: var(--border-radius);
-            padding: 2rem;
+            padding: 1rem;
             text-align: center;
             margin: 2rem 0;
-            border: 2px dashed #ddd;
+            border: 1px solid #eee;
+            min-height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         /* Footer */
@@ -232,9 +236,18 @@
         
         <img class="recipe-image" id="recipe-image" src="" alt="">
         
-        <div class="recipe-ad">
-            <i class="fas fa-ad" style="font-size: 2rem; color: #ccc; margin-bottom: 1rem;"></i>
-            <p>Espaço para publicidade</p>
+        <!-- AdSense - Primeiro anúncio -->
+        <div class="recipe-ad" id="ad-container-1">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4574160955541957" crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4574160955541957"
+                 data-ad-slot="1234567890"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
         </div>
         
         <div class="recipe-content">
@@ -248,6 +261,20 @@
                 <p class="instructions-text" id="recipe-instructions"></p>
             </div>
         </div>
+        
+        <!-- AdSense - Segundo anúncio -->
+        <div class="recipe-ad" id="ad-container-2">
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4574160955541957" crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-4574160955541957"
+                 data-ad-slot="0987654321"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
     </div>
 
     <footer>
@@ -256,6 +283,11 @@
     </footer>
 
     <script>
+        // API key e ID da planilha
+        const API_KEY = 'AIzaSyBqhpdzVXugN1GgkRUUHJ4Yo5JvjvY_wBc';
+        const SPREADSHEET_ID = '14dMXRPrTP6SCldqhprh2wulLtZJZSL3XQpawWISATVc';
+        const RANGE = 'A:F';
+
         // Elementos do DOM
         const backButton = document.getElementById('back-button');
         const recipeTitle = document.getElementById('recipe-title');
@@ -265,15 +297,77 @@
         const recipeIngredients = document.getElementById('recipe-ingredients');
         const recipeInstructions = document.getElementById('recipe-instructions');
 
-        // Função para carregar a receita
-        function loadRecipe() {
+        // Função para converter link do Google Drive em link direto para imagem
+        function convertGoogleDriveLink(url) {
+            if (!url) return null;
+            
+            if (url.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)) return url;
+            
+            if (url.includes('drive.google.com')) {
+                const match = url.match(/\/d\/([^\/]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                }
+            }
+            
+            return url;
+        }
+
+        // Função para buscar dados da planilha
+        async function fetchSheetData() {
             try {
-                // Tentar obter a receita do localStorage
-                const recipeData = localStorage.getItem('currentRecipe');
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
                 
-                if (recipeData) {
-                    const recipe = JSON.parse(recipeData);
+                if (data && data.values && data.values.length > 1) {
+                    const headers = data.values[0].map(header => header.toLowerCase().replace(/\s+/g, ''));
+                    const rows = data.values.slice(1);
                     
+                    return rows.map((row, index) => {
+                        const recipe = {};
+                        headers.forEach((header, i) => {
+                            recipe[header] = row[i] || '';
+                        });
+                        
+                        // Adicionar ID único para a receita
+                        recipe.id = `recipe-${index}-${recipe.nome.toLowerCase().replace(/\s+/g, '-')}`;
+                        
+                        // Processar URL da imagem
+                        if (recipe.url) {
+                            recipe.processedUrl = convertGoogleDriveLink(recipe.url);
+                        }
+                        
+                        return recipe;
+                    });
+                } else {
+                    throw new Error('Dados não encontrados na planilha');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                return [];
+            }
+        }
+
+        // Função para carregar a receita específica
+        async function loadRecipe() {
+            try {
+                // Obter o ID da receita da URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const recipeId = urlParams.get('id');
+                
+                if (!recipeId) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Buscar todas as receitas
+                const recipes = await fetchSheetData();
+                
+                // Encontrar a receita com o ID correspondente
+                const recipe = recipes.find(r => r.id === recipeId);
+                
+                if (recipe) {
                     // Preencher os dados da receita
                     recipeTitle.textContent = recipe.nome;
                     recipeCategory.textContent = recipe.categoria;
@@ -296,7 +390,7 @@
                     
                     recipeInstructions.textContent = recipe.mododepreparo || '';
                 } else {
-                    // Se não houver receita no localStorage, redirecionar para a página principal
+                    // Se não encontrar a receita, redirecionar para a página principal
                     window.location.href = 'index.html';
                 }
             } catch (error) {
