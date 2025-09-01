@@ -235,31 +235,16 @@
         /* Espaço para anúncios */
         .ad-space{
             grid-column:1/-1;
-            background:linear-gradient(to right, #f9f9f9, #f0f0f0);
+            background:#f9f9f9;
             border-radius:var(--border-radius);
-            padding:1.5rem;
+            padding:1rem;
             text-align:center;
             margin:1.5rem 0;
-            height:180px;
+            min-height:90px;
             display:flex;
-            flex-direction:column;
             justify-content:center;
             align-items:center;
-            border:2px dashed #ddd;
-            transition:var(--transition);
-        }
-        .ad-space:hover{
-            border-color:var(--primary-color);
-            background:linear-gradient(to right, #f5f5f5, #eaeaea);
-        }
-        .ad-space i{
-            font-size:2.5rem;
-            color:#ccc;
-            margin-bottom:0.8rem;
-        }
-        .ad-space p{
-            color:#888;
-            font-size:1rem;
+            border:1px solid #eee;
         }
         
         /* Footer */
@@ -291,6 +276,29 @@
         @keyframes spin{
             0%{transform:rotate(0deg)}
            100%{transform:rotate(360deg)}
+        }
+        
+        /* Botão Voltar */
+        .back-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+            margin-left: 1.5rem;
+        }
+        .back-button:hover {
+            background: var(--secondary-color);
+            transform: translateX(-5px);
+        }
+        .back-button i {
+            margin-right: 8px;
         }
         
         /* Responsividade */
@@ -335,6 +343,10 @@
         <p>&copy; 2023 Sabor de Casa - Todos os direitos reservados</p>
         <p>Desenvolvido com <i class="fas fa-heart" style="color: var(--primary-color);"></i> para amantes da culinária</p>
     </footer>
+
+    <!-- Script do Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4574160955541957"
+     crossorigin="anonymous"></script>
 
     <script>
         // API key e ID da planilha
@@ -436,11 +448,14 @@
                     categories.clear();
                     categories.add("all");
                     
-                    recipes = rows.map(row => {
+                    recipes = rows.map((row, index) => {
                         const recipe = {};
-                        headers.forEach((header, index) => {
-                            recipe[header] = row[index] || '';
+                        headers.forEach((header, i) => {
+                            recipe[header] = row[i] || '';
                         });
+                        
+                        // Adicionar ID único para a receita (índice + nome)
+                        recipe.id = `recipe-${index}-${recipe.nome.toLowerCase().replace(/\s+/g, '-')}`;
                         
                         // Processar URL da imagem (converter link do Google Drive se necessário)
                         if (recipe.url) {
@@ -472,6 +487,32 @@
             }
         }
 
+        // Função para criar elementos de anúncio
+        function createAdElement() {
+            const adContainer = document.createElement('div');
+            adContainer.className = 'ad-space';
+            
+            // Criar elemento ins para o anúncio
+            const adIns = document.createElement('ins');
+            adIns.className = 'adsbygoogle';
+            adIns.style.display = 'block';
+            adIns.dataset.adClient = 'ca-pub-4574160955541957';
+            adIns.dataset.adSlot = Math.floor(Math.random() * 1000000000);
+            adIns.dataset.adFormat = 'auto';
+            adIns.dataset.fullWidthResponsive = 'true';
+            
+            adContainer.appendChild(adIns);
+            
+            // Inicializar o anúncio
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+                console.error('Erro ao carregar anúncio:', e);
+            }
+            
+            return adContainer;
+        }
+
         // Função para exibir as receitas
         function displayRecipes(recipesToDisplay) {
             recipeGrid.innerHTML = '';
@@ -480,26 +521,17 @@
                 return;
             }
             
+            // Adicionar apenas um anúncio no topo
+            const topAdSpace = createAdElement();
+            recipeGrid.appendChild(topAdSpace);
+            
             recipesToDisplay.forEach((recipe, index) => {
-                if (index > 0 && index % 2 === 0) {
-                    const adSpace = document.createElement('div');
-                    adSpace.className = 'ad-space';
-                    adSpace.innerHTML = `<i class="fas fa-ad"></i><p>Espaço para publicidade</p>`;
-                    recipeGrid.appendChild(adSpace);
-                }
-                
                 const recipeCard = document.createElement('div');
                 recipeCard.className = 'recipe-card';
                 
-                // Gerar um ID único para a receita
-                const recipeId = 'recipe-' + index + '-' + recipe.nome.toLowerCase().replace(/\s+/g, '-');
-                
-                // Adicionar evento de clique que redireciona para página separada
+                // Adicionar evento de clique que redireciona para página de receita completa com ID na URL
                 recipeCard.addEventListener('click', () => {
-                    // Salvar a receita no localStorage
-                    localStorage.setItem('currentRecipe', JSON.stringify(recipe));
-                    // Redirecionar para a página da receita
-                    window.location.href = 'receita.html?id=' + recipeId;
+                    window.location.href = `receita.html?id=${recipe.id}`;
                 });
                 
                 const imageUrl = recipe.processedUrl || recipe.url || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80';
@@ -517,6 +549,10 @@
                 
                 recipeGrid.appendChild(recipeCard);
             });
+            
+            // Adicionar um anúncio adicional no final
+            const finalAdSpace = createAdElement();
+            recipeGrid.appendChild(finalAdSpace);
         }
 
         // Função para filtrar receitas por categoria
