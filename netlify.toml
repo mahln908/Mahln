@@ -1,0 +1,11 @@
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    "Cache-Control" = "no-cache"
+    "Service-Worker-Allowed" = "/"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    "X-Frame-Options" = "DENY"
+    "X-XSS-Protection" = "1; mode=block"
