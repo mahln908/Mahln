@@ -1,3 +1,7 @@
-// sw.js simplificado
-self.addEventListener('install', e => e.waitUntil(caches.open('pwa-cache')));
-self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+self.addEventListener('install', function(event) {
+  console.log('Service Worker instalado');
+});
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(fetch(event.request));
+});
