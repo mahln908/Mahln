@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor de Casa - Receitas Deliciosas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Meta tags PWA -->
+    <meta name="theme-color" content="#FFA366">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sabor de Casa">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="manifest" href="manifest.json">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
         :root{
@@ -301,6 +308,28 @@
             margin-right: 8px;
         }
         
+        /* Botão de Instalar PWA */
+        #installButton {
+            display: none; 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+            background: var(--primary-color); 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+            font-weight: 600; 
+            transition: all 0.3s ease;
+        }
+        #installButton:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
         /* Responsividade */
         @media (max-width:768px){
             .recipe-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
@@ -312,6 +341,12 @@
             h1{font-size:1.2rem}
             .logo-text{flex-direction:row}
             .pan-icon{margin-right:6px; font-size: 1.2rem;}
+            #installButton {
+                bottom: 70px;
+                right: 15px;
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -343,6 +378,11 @@
         <p>&copy; 2023 Sabor de Casa - Todos os direitos reservados</p>
         <p>Desenvolvido com <i class="fas fa-heart" style="color: var(--primary-color);"></i> para amantes da culinária</p>
     </footer>
+
+    <!-- Botão de Instalar App PWA -->
+    <button id="installButton">
+        <i class="fas fa-download" style="margin-right: 8px;"></i> Instalar App
+    </button>
 
     <!-- Script do Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4574160955541957"
@@ -376,7 +416,7 @@
         function convertGoogleDriveLink(url) {
             if (!url) return null;
             
-            // Se já for um link direto de imagem, retorna como está
+            // Se já para um link direto de imagem, retorna como está
             if (url.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)) return url;
             
             // Se for um link do Google Drive, converte para link direto
@@ -396,26 +436,19 @@
             categoriesContainer.innerHTML = '';
             categoriesContainer.appendChild(allButton);
             
-            // Adicionar categorias da planilha
-            categories.forEach(category => {
-                if (category !== "all" && category) {
-                    const button = document.createElement('button');
-                    button.className = 'category-btn';
-                    button.setAttribute('data-category', category);
-                    button.textContent = category;
-                    categoriesContainer.appendChild(button);
-                }
-            });
+            // Lista de categorias permitidas (em ordem específica)
+            const allowedCategories = [
+                "Pratos Principais", "Massas", "Bolos", "Low Carb", 
+                "Peixes", "Sobremesas", "Sucos", "Pães"
+            ];
             
-            // Adicionar categorias padrão que não estão na planilha
-            defaultCategories.forEach(category => {
-                if (!categories.has(category)) {
-                    const button = document.createElement('button');
-                    button.className = 'category-btn';
-                    button.setAttribute('data-category', category);
-                    button.textContent = category;
-                    categoriesContainer.appendChild(button);
-                }
+            // Filtrar e adicionar apenas as categorias permitidas
+            allowedCategories.forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'category-btn';
+                button.setAttribute('data-category', category);
+                button.textContent = category;
+                categoriesContainer.appendChild(button);
             });
             
             addCategoryEventListeners();
@@ -587,6 +620,74 @@
             
             displayRecipes(searchResults);
         }
+
+        // ===== CÓDIGO PWA =====
+        // Detectar se é um dispositivo móvel
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        // Gerenciar o botão de instalação
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir que o prompt automático apareça
+            e.preventDefault();
+            // Guardar o evento para usar depois
+            deferredPrompt = e;
+            // Mostrar o botão de instalação apenas em dispositivos móveis
+            if (isMobileDevice()) {
+                installButton.style.display = 'block';
+                
+                // Esconder o botão após 15 segundos
+                setTimeout(() => {
+                    installButton.style.display = 'none';
+                }, 15000);
+            }
+        });
+
+        // Evento de clique no botão de instalação
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Mostrar o prompt de instalação
+                deferredPrompt.prompt();
+                // Esperar pelo resultado
+                const { outcome } = await deferredPrompt.userChoice;
+                // Limpar o prompt guardado
+                deferredPrompt = null;
+                // Esconder o botão
+                installButton.style.display = 'none';
+                
+                if (outcome === 'accepted') {
+                    console.log('Usuário aceitou a instalação do PWA');
+                } else {
+                    console.log('Usuário rejeitou a instalação do PWA');
+                }
+            }
+        });
+
+        // Esconder o botão se o app já estiver instalado
+        window.addEventListener('appinstalled', () => {
+            installButton.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA foi instalado com sucesso');
+        });
+
+        // ===== FIM DO CÓDIGO PWA =====
 
         // Event listeners
         searchBtn.addEventListener('click', searchRecipes);
