@@ -1,7 +1,9 @@
-self.addEventListener('install', function(event) {
-  console.log('Service Worker instalado');
-});
+const CACHE_NAME = 'sabor-casa-v1';
+const urlsToCache = ['/'];
 
-self.addEventListener('fetch', function(event) {
-  event.respondWith(fetch(event.request));
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
 });
